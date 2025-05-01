@@ -1,6 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QLabel, QPushButton, QListWidget, QHBoxLayout, QVBoxLayout
 from PyQt5.QtGui import QPixmap
+from PIL import ImageEnhance
 import os
 
 app = QApplication([])
@@ -53,6 +54,7 @@ class ImageProcessor():
         self.dir = dir
         self.image = path
         self.fullname = path
+
     def showImage(self):
         image.hide()
         pixmapimage = QPixmap(self.fullname)
@@ -60,16 +62,25 @@ class ImageProcessor():
         pixmapimage =  pixmapimage.scaled(w, h, Qt.KeepAspectRatio)
         image.setPixmap(pixmapimage)
         image.show()
+
     def saveImage(self):
         save_path = os.path.join(self.dir, self.save_dir)
         if not(os.path.exists(save_path) or os.path.isdir(save_path)): 
             os.mkdir(save_path)
         self.image.save(os.path.join(save_path, self.filename))
+
     def do_bw(self):
         self.image = self.image.convert("L")
         self.saveImage()
         image_path = os.path.join(self.dir, self.save_dir, self.filename)
         self.showImage(image_path)
+    
+    def do_sharp(self):
+        self.image = self.image()
+        self.image = ImageEnhance.Contrast(image)
+        self.image = image.enhance(1.5)
+
+   
 
 def filter(files, extensions):
     result = []
@@ -102,8 +113,10 @@ def showChosenImage():
         workImage.loadImage(workdir, filename)
         workImage.showImage()
 
+
 files.currentRowChanged.connect(showChosenImage)
 btn.clicked.connect(ShowFiles)
-do_bw.clicked.connect(workImage.do_bw)
+btn_bw.clicked.connect(workImage.do_bw)
+btn_sharp.clicked.connect(workImage.do_sharp)
 win.show()
 app.exec()
