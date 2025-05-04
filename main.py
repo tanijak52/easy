@@ -79,8 +79,29 @@ class ImageProcessor():
         self.image = self.image()
         self.image = ImageEnhance.Contrast(image)
         self.image = image.enhance(1.5)
+        self.saveImage()
+        image_path = os.path.join(self.dir, self.save_dir, self.filename)
+        self.showImage(image_path)
 
-   
+    def do_mirror(self):
+        self.mirrored_image = image.transpose(image.FLIP_LEFT_RIGHT)
+        self.saveImage()
+        image_path = os.path.join(self.dir, self.save_dir, self.filename)
+        self.showImage(image_path)
+
+    def do_right(self):
+        self.rotated_image = image.transpose(image.ROTATE_270)
+        self.saveImage()
+        image_path = os.path.join(self.dir, self.save_dir, self.filename)
+        self.showImage(image_path)
+
+    def do_left(self):
+        self.rotated_left = image.transpose(image.ROTATE_90)
+        self.saveImage()
+        image_path = os.path.join(self.dir, self.save_dir, self.filename)
+        self.showImage(image_path)
+
+
 
 def filter(files, extensions):
     result = []
@@ -118,5 +139,8 @@ files.currentRowChanged.connect(showChosenImage)
 btn.clicked.connect(ShowFiles)
 btn_bw.clicked.connect(workImage.do_bw)
 btn_sharp.clicked.connect(workImage.do_sharp)
+btn_mirror.clicked.connect(workImage.do_mirror)
+btn_right.clicked.connect(workImage.do_right)
+btn_left.clicked.connect(workImage.do_left)
 win.show()
 app.exec()
