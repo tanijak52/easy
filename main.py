@@ -50,8 +50,8 @@ class ImageProcessor():
 
     def loadImage(self, dir, filename):
         self.filename = filename
-        path = os.path.join(self.dir, self.filename)
         self.dir = dir
+        path = os.path.join(self.dir, self.filename)
         self.image = path
         self.fullname = path
 
