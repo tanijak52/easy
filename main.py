@@ -1,15 +1,29 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer, QTime
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QLabel, QPushButton, QListWidget, QHBoxLayout, QVBoxLayout
 from PyQt5.QtGui import QPixmap
 from PIL import Image, ImageEnhance
 import os
 
-
 app = QApplication([])
 win = QWidget()
 win.resize(700, 500)
-image_label = QLabel("Картинка")  
 
+
+clock_label = QLabel()  #Відображає поточний час у цифровому форматі
+clock_label.setAlignment(Qt.AlignRight)
+clock_label.setStyleSheet("font-size: 24px;")
+
+def update_time(): #Отримує поточний системний час
+    current_time = QTime.currentTime().toString("HH:mm:ss")
+    clock_label.setText(current_time)
+
+timer = QTimer() #Автоматично викликає функцію update_time()
+timer.timeout.connect(update_time)
+timer.start(1000)
+update_time()
+
+
+image_label = QLabel("Картинка")
 
 btn = QPushButton("Папка")
 files = QListWidget()
@@ -22,12 +36,15 @@ btn_sharp = QPushButton("Різкість")
 btn_bw = QPushButton("Ч/Б")
 
 
+
 hl_a = QHBoxLayout()
 vl_b = QVBoxLayout()
 vl_c = QVBoxLayout()
 
 vl_b.addWidget(btn)
 vl_b.addWidget(files)
+
+vl_c.addWidget(clock_label) 
 vl_c.addWidget(image_label, 95)
 
 hl_a_tools = QHBoxLayout()
@@ -36,6 +53,7 @@ hl_a_tools.addWidget(btn_right)
 hl_a_tools.addWidget(btn_mirror)
 hl_a_tools.addWidget(btn_sharp)
 hl_a_tools.addWidget(btn_bw)
+
 
 vl_c.addLayout(hl_a_tools)
 hl_a.addLayout(vl_b, 1)
@@ -50,13 +68,14 @@ class ImageProcessor():
         self.filename = None
         self.save_dir = "Modified"
         self.fullname = None
-
+        
     def loadImage(self, dir, filename):
         self.filename = filename
         self.dir = dir
         path = os.path.join(self.dir, self.filename)
         self.fullname = path
         self.image = Image.open(path)
+       
 
     def showImage(self, path=None):
         image_label.hide()
@@ -67,7 +86,8 @@ class ImageProcessor():
         pixmapimage = pixmapimage.scaled(w, h, Qt.KeepAspectRatio)
         image_label.setPixmap(pixmapimage)
         image_label.show()
-
+        
+        
     def saveImage(self):
         save_path = os.path.join(self.dir, self.save_dir)
         if not os.path.exists(save_path):
@@ -102,7 +122,8 @@ class ImageProcessor():
         path = self.saveImage()
         self.showImage(path)
 
-
+    
+        self.showImage()    
 def filter(files, extensions):
     result = []
     for file in files:
@@ -111,12 +132,10 @@ def filter(files, extensions):
                 result.append(file)
     return result
 
-
 def ChosseWorkdir():
     global workdir
     workdir = QFileDialog.getExistingDirectory()
     print("відкрита папка: " + workdir)
-
 
 def ShowFiles():
     extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.avif']
@@ -126,16 +145,13 @@ def ShowFiles():
     for filename in filenames:
         files.addItem(filename)
 
-
 workImage = ImageProcessor()
-
 
 def showChosenImage():
     if files.currentRow() >= 0:
         filename = files.currentItem().text()
         workImage.loadImage(workdir, filename)
         workImage.showImage(workImage.fullname)
-
 
 files.currentRowChanged.connect(showChosenImage)
 btn.clicked.connect(ShowFiles)
@@ -146,5 +162,7 @@ btn_right.clicked.connect(workImage.do_right)
 btn_left.clicked.connect(workImage.do_left)
 
 
+
 win.show()
 app.exec()
+
