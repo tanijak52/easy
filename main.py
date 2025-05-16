@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QTimer, QTime
+from PyQt5.QtCore import Qt, QTimer, QTime, QPoint  
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QLabel, QPushButton, QListWidget, QHBoxLayout, QVBoxLayout
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QPainter, QPen 
 from PIL import Image, ImageEnhance
 import os
 
@@ -8,22 +8,56 @@ app = QApplication([])
 win = QWidget()
 win.resize(700, 500)
 
-
-clock_label = QLabel()  #Відображає поточний час у цифровому форматі
+clock_label = QLabel()
 clock_label.setAlignment(Qt.AlignRight)
 clock_label.setStyleSheet("font-size: 24px;")
 
-def update_time(): #Отримує поточний системний час
+def update_time():
     current_time = QTime.currentTime().toString("HH:mm:ss")
     clock_label.setText(current_time)
 
-timer = QTimer() #Автоматично викликає функцію update_time()
+timer = QTimer()
 timer.timeout.connect(update_time)
 timer.start(1000)
 update_time()
 
+# Клас для малювання на QLabel
+class ImageLabel(QLabel): 
+    def __init__(self):
+        super().__init__()
+        self.drawing = False  
+        self.last_point = QPoint()  
+        self.is_draw_mode = False  
+        self.image = QPixmap() 
 
-image_label = QLabel("Картинка")
+    def setPixmap(self, pixmap):#відобразити передане зображення 
+        super().setPixmap(pixmap)
+        self.image = pixmap.copy() 
+
+    def mousePressEvent(self, event): #натиснута миш 
+        if self.is_draw_mode and event.button() == Qt.LeftButton:
+            self.drawing = True
+            self.last_point = event.pos() 
+
+    def mouseMoveEvent(self, event): #True користувач тримає натиснутою миш
+        if self.drawing and self.is_draw_mode:
+            painter = QPainter(self.image) 
+            pen = QPen(Qt.red, 3, Qt.SolidLine)  
+            painter.setPen(pen)
+            painter.drawLine(self.last_point, event.pos())
+            self.last_point = event.pos()
+            painter.end()
+            super().setPixmap(self.image)  
+
+    def mouseReleaseEvent(self, event): #обробка миші
+        if event.button() == Qt.LeftButton:
+            self.drawing = False  
+
+    def toggle_draw_mode(self):
+        self.is_draw_mode = not self.is_draw_mode  #Вмикання/вимикання малювання
+
+
+image_label = ImageLabel()  
 
 btn = QPushButton("Папка")
 files = QListWidget()
@@ -34,9 +68,7 @@ btn_right = QPushButton("Вправо")
 btn_mirror = QPushButton("Дзеркало")
 btn_sharp = QPushButton("Різкість")
 btn_bw = QPushButton("Ч/Б")
-
-
-
+btn_draw = QPushButton("Малювати") 
 hl_a = QHBoxLayout()
 vl_b = QVBoxLayout()
 vl_c = QVBoxLayout()
@@ -44,7 +76,7 @@ vl_c = QVBoxLayout()
 vl_b.addWidget(btn)
 vl_b.addWidget(files)
 
-vl_c.addWidget(clock_label) 
+vl_c.addWidget(clock_label)
 vl_c.addWidget(image_label, 95)
 
 hl_a_tools = QHBoxLayout()
@@ -53,13 +85,12 @@ hl_a_tools.addWidget(btn_right)
 hl_a_tools.addWidget(btn_mirror)
 hl_a_tools.addWidget(btn_sharp)
 hl_a_tools.addWidget(btn_bw)
-
+hl_a_tools.addWidget(btn_draw)  
 
 vl_c.addLayout(hl_a_tools)
 hl_a.addLayout(vl_b, 1)
 hl_a.addLayout(vl_c, 3)
 win.setLayout(hl_a)
-
 
 class ImageProcessor():
     def __init__(self):
@@ -68,14 +99,13 @@ class ImageProcessor():
         self.filename = None
         self.save_dir = "Modified"
         self.fullname = None
-        
+
     def loadImage(self, dir, filename):
         self.filename = filename
         self.dir = dir
         path = os.path.join(self.dir, self.filename)
         self.fullname = path
         self.image = Image.open(path)
-       
 
     def showImage(self, path=None):
         image_label.hide()
@@ -86,8 +116,7 @@ class ImageProcessor():
         pixmapimage = pixmapimage.scaled(w, h, Qt.KeepAspectRatio)
         image_label.setPixmap(pixmapimage)
         image_label.show()
-        
-        
+
     def saveImage(self):
         save_path = os.path.join(self.dir, self.save_dir)
         if not os.path.exists(save_path):
@@ -122,8 +151,6 @@ class ImageProcessor():
         path = self.saveImage()
         self.showImage(path)
 
-    
-        self.showImage()    
 def filter(files, extensions):
     result = []
     for file in files:
@@ -160,9 +187,7 @@ btn_sharp.clicked.connect(workImage.do_sharp)
 btn_mirror.clicked.connect(workImage.do_mirror)
 btn_right.clicked.connect(workImage.do_right)
 btn_left.clicked.connect(workImage.do_left)
-
-
+btn_draw.clicked.connect(image_label.toggle_draw_mode)  
 
 win.show()
 app.exec()
-
