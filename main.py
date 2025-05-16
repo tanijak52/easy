@@ -13,7 +13,7 @@ clock_label.setAlignment(Qt.AlignRight)
 clock_label.setStyleSheet("font-size: 24px;")
 
 def update_time():
-    current_time = QTime.currentTime().toString("HH:mm:ss")
+    current_time = QTime.currentTime().toString("HH:mm")
     clock_label.setText(current_time)
 
 timer = QTimer()
@@ -42,7 +42,7 @@ class ImageLabel(QLabel):
     def mouseMoveEvent(self, event): #True користувач тримає натиснутою миш
         if self.drawing and self.is_draw_mode:
             painter = QPainter(self.image) 
-            pen = QPen(Qt.red, 3, Qt.SolidLine)  
+            pen = QPen(Qt.green, 3, Qt.DashDotDotLine)  
             painter.setPen(pen)
             painter.drawLine(self.last_point, event.pos())
             self.last_point = event.pos()
@@ -190,4 +190,4 @@ btn_left.clicked.connect(workImage.do_left)
 btn_draw.clicked.connect(image_label.toggle_draw_mode)  
 
 win.show()
-app.exec()
+app.exec()  
